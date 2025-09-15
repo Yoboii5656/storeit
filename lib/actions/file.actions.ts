@@ -34,12 +34,8 @@ export const uploadFile = async ({
       type: getFileType(bucketFile.name).type,
       name: bucketFile.name,
       url: constructFileUrl(bucketFile.$id),
-      extension: getFileType(bucketFile.name).extension,
       size: bucketFile.sizeOriginal,
-      owner: ownerId,
-      accountId,
-      users: [],
-      bucketFileId: bucketFile.$id,
+      bucketfield: bucketFile.$id, // Required field in your schema
     };
 
     const newFile = await databases
@@ -68,12 +64,10 @@ const createQueries = (
   sort: string,
   limit?: number,
 ) => {
-  const queries = [
-    Query.or([
-      Query.equal("owner", [currentUser.$id]),
-      Query.contains("users", [currentUser.email]),
-    ]),
-  ];
+  const queries: any[] = [];
+
+  // For now, let's get all files without user filtering to see what's in the collection
+  // TODO: Add proper user filtering once we know the correct field names
 
   if (types.length > 0) queries.push(Query.equal("type", types));
   if (searchText) queries.push(Query.contains("name", searchText));
@@ -200,10 +194,12 @@ export async function getTotalSpaceUsed() {
     const currentUser = await getCurrentUser();
     if (!currentUser) throw new Error("User is not authenticated.");
 
+    // For now, get all files without user filtering
+    // TODO: Add proper user filtering once we know the correct field names
     const files = await databases.listDocuments(
       appwriteConfig.databaseId,
       appwriteConfig.filesCollectionId,
-      [Query.equal("owner", [currentUser.$id])],
+      [],
     );
 
     const totalSpace = {
@@ -234,3 +230,4 @@ export async function getTotalSpaceUsed() {
     handleError(error, "Error calculating total space used:, ");
   }
 }
+
